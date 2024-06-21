@@ -39,7 +39,7 @@ def display_sudoku(board):
             else:
                 entry = tk.Entry(subframe, font=('Arial', 20), width=2, justify='center')
                 entry.bind("<Button-1>", on_click)
-                entry.grid(row=0, column=0)
+                entry.pack(ipadx=10, ipady=10)
                 entries[i][j] = entry
 
     # Submit button function
@@ -65,9 +65,15 @@ def refresh_sudoku():
         widget.destroy()
     display_sudoku(sudoku_board)
 
-# Function to handle resize event
+# Function to handle resize event with delay
 def on_resize(event):
-    refresh_sudoku()
+    if event.widget == root:
+        if root.after_id is not None:
+            root.after_cancel(root.after_id)  # Cancel any pending refresh
+        root.after_id = root.after(200, refresh_sudoku)  # Delay refresh by 200ms
+
+# Initialize the after_id attribute
+root.after_id = None
 
 # Bind event to resize the Sudoku board
 root.bind("<Configure>", on_resize)
