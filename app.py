@@ -1,5 +1,6 @@
 import tkinter as tk
 from generator import generate_sudoku
+from validate import *
 
 # Initialize Tkinter root window
 root = tk.Tk()
@@ -20,7 +21,7 @@ def display_sudoku(board):
 
     # Calculate frame size based on window size and number of cells
     min_frame_size = 20  # Adjust as needed
-    frame_size = max(min_frame_size, min(root.winfo_width(), root.winfo_height()) // 12)
+    frame_size = max(min_frame_size, min(root.winfo_width(), root.winfo_height()))
 
     for i in range(3):
         for j in range(3):
@@ -39,8 +40,25 @@ def display_sudoku(board):
             else:
                 entry = tk.Entry(subframe, font=('Arial', 20), width=2, justify='center')
                 entry.bind("<Button-1>", on_click)
+                entry.bind("<KeyRelease>", lambda event, x=i, y=j: on_key_release(event, x, y))
                 entry.pack(ipadx=10, ipady=10)
                 entries[i][j] = entry
+
+    # Function to handle key release event
+    def on_key_release(event, i, j):
+        if entries[i][j] is not None:
+            value = entries[i][j].get()
+            if value.isdigit() and 1 <= int(value) <= 9:
+                board[i][j] = value
+            else:
+                board[i][j] = ""
+        # Validate the board
+        if validate_sudoku(board):
+            print("Board is valid")
+        else:
+            print("Board is invalid")
+        # Update display with new board state
+        refresh_sudoku()
 
     # Submit button function
     def submit():
@@ -52,6 +70,11 @@ def display_sudoku(board):
                         board[i][j] = int(value)
                     else:
                         board[i][j] = ""
+        # Validate the board
+        if validate_sudoku(board):
+            print("Board is valid")
+        else:
+            print("Board is invalid")
         # Update display with new board state
         refresh_sudoku()
 
@@ -80,3 +103,4 @@ root.bind("<Configure>", on_resize)
 display_sudoku(sudoku_board)
 
 root.mainloop()
+
