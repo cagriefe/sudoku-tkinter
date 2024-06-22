@@ -1,106 +1,95 @@
 import tkinter as tk
 from generator import generate_sudoku
-from validate import *
 
-# Initialize Tkinter root window
-root = tk.Tk()
-root.title("Sudoku Classic")
-root.resizable(0, 0)  # Disable resizing
+class SudokuGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Sudoku Classic")
+        self.root.resizable(0, 0)  # Disable resizing
 
-# Generate Sudoku board
-sudoku_board = generate_sudoku('easy')
+        self.sudoku_board = generate_sudoku('easy')
 
-# Function to display Sudoku board
-def display_sudoku(board):
-    frames = [[None] * 3 for _ in range(3)]
-    entries = [[None] * 9 for _ in range(9)]
+        self.frames = [[None] * 3 for _ in range(3)]
+        self.entries = [[None] * 9 for _ in range(9)]
 
-    def on_click(event):
-        # Clear the entry's content when clicked
-        event.widget.delete(0, tk.END)
+        self.display_sudoku()
 
-    # Calculate frame size based on window size and number of cells
-    min_frame_size = 20  # Adjust as needed
-    frame_size = max(min_frame_size, min(root.winfo_width(), root.winfo_height()))
+    def display_sudoku(self):
+        frame_size = 50
 
-    for i in range(3):
-        for j in range(3):
-            frame = tk.Frame(root, width=3 * frame_size, height=3 * frame_size, highlightbackground="black", highlightthickness=2)
-            frame.grid(row=i, column=j, padx=1, pady=1)
-            frames[i][j] = frame
+        for i in range(3):
+            for j in range(3):
+                frame = tk.Frame(self.root, width=3 * frame_size, height=3 * frame_size, highlightbackground="black", highlightthickness=2)
+                frame.grid(row=i, column=j, padx=1, pady=1)
+                self.frames[i][j] = frame
 
-    for i in range(9):
-        for j in range(9):
-            frame = frames[i // 3][j // 3]
-            subframe = tk.Frame(frame, width=frame_size, height=frame_size, highlightbackground="red", highlightthickness=0)
-            subframe.grid(row=i % 3, column=j % 3)
-            if board[i][j] != "":
-                label = tk.Label(subframe, text=str(board[i][j]), font=('Arial', 20), width=2, relief="ridge")
-                label.pack(ipadx=10, ipady=10)
-            else:
-                entry = tk.Entry(subframe, font=('Arial', 20), width=2, justify='center')
-                entry.bind("<Button-1>", on_click)
-                entry.bind("<KeyRelease>", lambda event, x=i, y=j: on_key_release(event, x, y))
-                entry.pack(ipadx=10, ipady=10)
-                entries[i][j] = entry
-
-    # Function to handle key release event
-    def on_key_release(event, i, j):
-        if entries[i][j] is not None:
-            value = entries[i][j].get()
-            if value.isdigit() and 1 <= int(value) <= 9:
-                board[i][j] = value
-            else:
-                board[i][j] = ""
-        # Validate the board
-        if validate_sudoku(board):
-            print("Board is valid")
-        else:
-            print("Board is invalid")
-        # Update display with new board state
-        refresh_sudoku()
-
-    # Submit button function
-    def submit():
         for i in range(9):
             for j in range(9):
-                if entries[i][j] is not None:
-                    value = entries[i][j].get()
+                frame = self.frames[i // 3][j // 3]
+                subframe = tk.Frame(frame, width=frame_size, height=frame_size, highlightbackground="red", highlightthickness=0)
+                subframe.grid(row=i % 3, column=j % 3)
+                if self.sudoku_board[i][j] != "":
+                    label = tk.Label(subframe, text=str(self.sudoku_board[i][j]), font=('Arial', 20), width=2, relief="ridge")
+                    label.pack(ipadx=10, ipady=10)
+                else:
+                    entry = tk.Entry(subframe, font=('Arial', 20), width=2, justify='center')
+                    entry.pack(ipadx=10, ipady=10)
+                    self.entries[i][j] = entry
+
+        submit_button = tk.Button(self.root, text="Submit", command=self.submit)
+        submit_button.grid(row=4, columnspan=3, pady=10)
+
+    def submit(self):
+        for i in range(9):
+            for j in range(9):
+                if self.entries[i][j] is not None:
+                    value = self.entries[i][j].get()
                     if value.isdigit() and 1 <= int(value) <= 9:
-                        board[i][j] = int(value)
+                        self.sudoku_board[i][j] = int(value)
                     else:
-                        board[i][j] = ""
-        # Validate the board
-        if validate_sudoku(board):
+                        self.sudoku_board[i][j] = ""
+
+        if self.validate_board():
             print("Board is valid")
         else:
             print("Board is invalid")
-        # Update display with new board state
-        refresh_sudoku()
 
-    # Submit button
-    submit_button = tk.Button(root, text="Submit", command=submit)
-    submit_button.grid(row=4, columnspan=3, pady=10)
+    def validate_board(self):
+        seen = set()
 
-# Function to refresh the Sudoku display with updated board
-def refresh_sudoku():
-    for widget in root.winfo_children():
-        widget.destroy()
-    display_sudoku(sudoku_board)
+        # Check rows
+        for row in self.sudoku_board:
+            for value in row:
+                if value in seen:
+                    return False
+                if value != "":
+                    seen.add(value)
 
-# Function to handle resize event with delay
-def on_resize(event):
-    if event.widget == root:
-        if root.after_id is not None:
-            root.after_cancel(root.after_id)  # Cancel any pending refresh
-        root.after_id = root.after(200, refresh_sudoku)  # Delay refresh by 200ms
+        # Check columns
+        for col in range(9):
+            seen.clear()
+            for row in range(9):
+                value = self.sudoku_board[row][col]
+                if value in seen:
+                    return False
+                if value != "":
+                    seen.add(value)
 
-# Initialize the after_id attribute
-root.after_id = None
+        # Check 3x3 sub-grids
+        for box_row in range(0, 9, 3):
+            for box_col in range(0, 9, 3):
+                seen.clear()
+                for i in range(3):
+                    for j in range(3):
+                        value = self.sudoku_board[box_row + i][box_col + j]
+                        if value in seen:
+                            return False
+                        if value != "":
+                            seen.add(value)
 
-# Bind event to resize the Sudoku board
-root.bind("<Configure>", on_resize)
-display_sudoku(sudoku_board)
+        return True
 
-root.mainloop()
-
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = SudokuGUI(root)
+    root.mainloop()

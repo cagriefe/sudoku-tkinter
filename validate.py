@@ -20,15 +20,13 @@ def validate_sudoku(board):
             return False
 
     # Check 3x3 sub-grids
-    for box_row in range(3):
-        for box_col in range(3):
-            if not is_valid_group(
-                [
-                    board[row][col]
-                    for row in range(box_row * 3, (box_row + 1) * 3)
-                    for col in range(box_col * 3, (box_col + 1) * 3)
-                ]
-            ):
+    for box_row in range(0, 9, 3):
+        for box_col in range(0, 9, 3):
+            group = []
+            for i in range(3):
+                for j in range(3):
+                    group.append(board[box_row + i][box_col + j])
+            if not is_valid_group(group):
                 return False
 
     return True
