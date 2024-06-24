@@ -9,17 +9,14 @@ def validate_sudoku(board):
                 seen.add(value)
         return True
 
-    # Check rows
     for row in board:
         if not is_valid_group(row):
             return False
 
-    # Check columns
     for col in range(9):
         if not is_valid_group([board[row][col] for row in range(9)]):
             return False
 
-    # Check 3x3 sub-grids
     for box_row in range(0, 9, 3):
         for box_col in range(0, 9, 3):
             group = []

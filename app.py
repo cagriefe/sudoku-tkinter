@@ -6,14 +6,13 @@ class SudokuGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Sudoku Classic")
-        self.root.resizable(0, 0)  # Disable resizing
+        self.root.resizable(0, 0)
 
-        self.sudoku_board = generate_sudoku('easy')
+        self.sudoku_board = generate_sudoku('') #'easy','medium',''
 
         self.frames = [[None] * 3 for _ in range(3)]
         self.entries = [[None] * 9 for _ in range(9)]
 
-        # Set to track user-filled cells
         self.user_filled_cells = set()
 
         self.display_sudoku()
@@ -62,7 +61,6 @@ class SudokuGUI:
         else:
             print("Board is invalid")
 
-        # Refresh the display to show updated board
         self.refresh_sudoku()
 
     def refresh_sudoku(self):

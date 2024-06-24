@@ -1,18 +1,14 @@
 import random
-from copy import deepcopy
 
 def is_valid(board, row, col, num):
-    # Check if the number is already in the row
     for x in range(9):
         if board[row][x] == num:
             return False
 
-    # Check if the number is already in the column
     for x in range(9):
         if board[x][col] == num:
             return False
 
-    # Check if the number is in the 3x3 subgrid
     start_row = row - row % 3
     start_col = col - col % 3
     for i in range(3):
@@ -23,47 +19,62 @@ def is_valid(board, row, col, num):
     return True
 
 def solve_sudoku(board):
+    empty_cell = find_empty_cell(board)
+    if not empty_cell:
+        return True
+    row, col = empty_cell
+
+    numbers = list(range(1, 10))
+    random.shuffle(numbers) 
+
+    for num in numbers:
+        if is_valid(board, row, col, num):
+            board[row][col] = num
+            if solve_sudoku(board):
+                return True
+            board[row][col] = ""
+
+    return False
+
+def find_empty_cell(board):
     for row in range(9):
         for col in range(9):
             if board[row][col] == "":
-                for num in range(1, 10):
-                    if is_valid(board, row, col, num):
-                        board[row][col] = num
-                        if solve_sudoku(board):
-                            return True
-                        board[row][col] = ""
-                return False
-    return True
+                return row, col
+    return None
 
 def remove_numbers(board, num_holes):
-    holes_made = 0
-    while holes_made < num_holes:
+    while num_holes > 0:
         row = random.randint(0, 8)
         col = random.randint(0, 8)
         if board[row][col] != "":
-            removed_num = board[row][col]
             board[row][col] = ""
-            
-            # Check if the board is still valid after removing the number
-            if not is_valid(board, row, col, removed_num):
-                board[row][col] = removed_num
-                continue
-            
-            holes_made += 1
+            num_holes -= 1
 
-def generate_sudoku(difficulty=''):
+def generate_sudoku(difficulty='easy'):
     board = [[""] * 9 for _ in range(9)]
-    solve_sudoku(board)  # Fill the board with a valid solution
-
-    # Set difficulty levels
+    
+    fill_diagonal_grids(board)
+    
+    solve_sudoku(board)
+    
     if difficulty == 'easy':
-        num_holes = 40  # Adjust this number based on desired difficulty
+        num_holes = 40 
     elif difficulty == 'medium':
         num_holes = 50
     else:  # hard
         num_holes = 60
 
-    # Create a copy of the board to work with
-    board_copy = deepcopy(board)
-    remove_numbers(board_copy, num_holes)  # Create the puzzle by removing numbers
-    return board_copy
+    remove_numbers(board, num_holes)  
+    return board
+
+def fill_diagonal_grids(board):
+    for i in range(0, 9, 3):
+        fill_3x3_grid(board, i, i)
+
+def fill_3x3_grid(board, row, col):
+    numbers = list(range(1, 10))
+    random.shuffle(numbers)
+    for i in range(3):
+        for j in range(3):
+            board[row + i][col + j] = numbers.pop()
