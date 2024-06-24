@@ -1,5 +1,6 @@
 import tkinter as tk
 from generator import generate_sudoku
+from validate import validate_sudoku
 
 class SudokuGUI:
     def __init__(self, root):
@@ -11,6 +12,9 @@ class SudokuGUI:
 
         self.frames = [[None] * 3 for _ in range(3)]
         self.entries = [[None] * 9 for _ in range(9)]
+
+        # Set to track user-filled cells
+        self.user_filled_cells = set()
 
         self.display_sudoku()
 
@@ -42,52 +46,32 @@ class SudokuGUI:
     def submit(self):
         for i in range(9):
             for j in range(9):
-                if self.entries[i][j] is not None:
+                if self.entries[i][j] is not None and self.entries[i][j]['state'] != 'readonly':
                     value = self.entries[i][j].get()
                     if value.isdigit() and 1 <= int(value) <= 9:
                         self.sudoku_board[i][j] = int(value)
+                        self.user_filled_cells.add((i, j))
                     else:
                         self.sudoku_board[i][j] = ""
 
-        if self.validate_board():
+        if validate_sudoku(self.sudoku_board):
             print("Board is valid")
+            for i, j in self.user_filled_cells:
+                if self.entries[i][j] is not None:
+                    self.entries[i][j].config(state='readonly')
         else:
             print("Board is invalid")
 
-    def validate_board(self):
-        seen = set()
+        # Refresh the display to show updated board
+        self.refresh_sudoku()
 
-        # Check rows
-        for row in self.sudoku_board:
-            for value in row:
-                if value in seen:
-                    return False
-                if value != "":
-                    seen.add(value)
-
-        # Check columns
-        for col in range(9):
-            seen.clear()
-            for row in range(9):
-                value = self.sudoku_board[row][col]
-                if value in seen:
-                    return False
-                if value != "":
-                    seen.add(value)
-
-        # Check 3x3 sub-grids
-        for box_row in range(0, 9, 3):
-            for box_col in range(0, 9, 3):
-                seen.clear()
-                for i in range(3):
-                    for j in range(3):
-                        value = self.sudoku_board[box_row + i][box_col + j]
-                        if value in seen:
-                            return False
-                        if value != "":
-                            seen.add(value)
-
-        return True
+    def refresh_sudoku(self):
+        for i in range(9):
+            for j in range(9):
+                if self.entries[i][j] is not None and self.entries[i][j]['state'] != 'readonly':
+                    self.entries[i][j].delete(0, tk.END)
+                    if self.sudoku_board[i][j] != "":
+                        self.entries[i][j].insert(0, str(self.sudoku_board[i][j]))
 
 if __name__ == "__main__":
     root = tk.Tk()
